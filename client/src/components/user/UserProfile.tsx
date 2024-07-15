@@ -12,17 +12,29 @@ import { Field, Form, Formik } from "formik";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { usePatchUser } from "./hooks/usePatchUser";
+import { MUTATION_KEY, usePatchUser } from "./hooks/usePatchUser";
 import { useUser } from "./hooks/useUser";
 import { UserAppointments } from "./UserAppointments";
 
 import { useLoginData } from "@/auth/AuthContext";
+import { useMutationState } from "@tanstack/react-query";
+import { User } from "@shared/types";
 
 export function UserProfile() {
   const { userId } = useLoginData();
   const { user } = useUser();
   const patchUser = usePatchUser();
   const navigate = useNavigate();
+
+  const pendingData = useMutationState({
+    filters: { mutationKey: [MUTATION_KEY], status: "pending" },
+    select: (mutation) => {
+      return mutation.state.variables as User;
+    }
+  });
+
+  // take first item in pendingData array
+  const pendingUser = pendingData ? pendingData[0] : null;
 
   useEffect(() => {
     // use login data for redirect, for base app that doesn't
@@ -44,7 +56,7 @@ export function UserProfile() {
       <Stack spacing={8} mx="auto" w="xl" py={12} px={6}>
         <UserAppointments />
         <Stack textAlign="center">
-          <Heading>Your information</Heading>
+          <Heading>Information for {pendingUser ? pendingUser?.name : user?.name} </Heading>
         </Stack>
         <Box rounded="lg" bg="white" boxShadow="lg" p={8}>
           <Formik
